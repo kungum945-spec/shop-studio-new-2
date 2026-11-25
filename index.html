@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Affiliate Studio Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+body{font-family:'Noto Sans Thai',sans-serif;background:linear-gradient(135deg,#fff9fb,#fdf4f7 45%,#f8fafc);color:#1e293b;scroll-behavior:smooth}
+.glass-card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border:1px solid rgba(244,114,182,.18);box-shadow:0 10px 25px -10px rgba(190,24,93,.08)}
+.step-badge,.btn-primary{background:linear-gradient(135deg,#db2777,#9333ea)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.option-pill.active{background:linear-gradient(135deg,#fdf2f8,#f3e8ff);border-color:#db2777;color:#9d174d;box-shadow:0 0 0 2px rgba(219,39,119,.18)}
+.presenter-card.active{border-color:#db2777;background:linear-gradient(180deg,#fff1f2,#fff);box-shadow:0 8px 18px -6px rgba(219,39,119,.28)}
+.spinner{border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;width:16px;height:16px;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body class="min-h-screen pb-16">
+<div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-pink-100 shadow-sm">
+<div class="max-w-6xl mx-auto px-4 py-3">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl step-badge flex items-center justify-center text-white text-lg shadow">🛍️</div>
+<div>
+<h1 class="text-base font-bold text-slate-800 leading-tight">Affiliate Studio Pro</h1>
+<p class="text-[11px] text-slate-500">คิดสคริปต์ • Prompt ตรงปก • ตรวจ QC • ชุดภาพขาย 3 รูป • คิวปักตะกร้า</p>
+</div>
+</div>
+<button id="resetProjectBtn" type="button" class="lg:hidden text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600">รีเซ็ต</button>
+</div>
+<div class="flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl p-2">
+<span class="text-xs font-semibold text-slate-700">API:</span>
+<span id="apiStatusBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">ยังไม่ได้บันทึก</span>
+<div class="relative flex-1 min-w-[140px]">
+<input id="apiKeyInput" type="password" autocomplete="off" placeholder="วาง Gemini API Key" class="w-full text-xs bg-white border border-slate-300 rounded-lg pl-2.5 pr-7 py-1.5" />
+<button id="toggleApiVisBtn" type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs">👁️</button>
+</div>
+<select id="modelSelect" class="text-xs bg-white border border-slate-300 rounded-lg px-2 py-1.5">
+<option value="auto">Auto (แนะนำ)</option>
+<option value="gemini-3.8-flash">gemini-3.8-flash</option>
+<option value="gemini-3.6-flash">gemini-3.6-flash</option>
+<option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+<option value="gemini-2.5-flash">gemini-2.5-flash</option>
+</select>
+<button id="saveApiBtn" type="button" class="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-medium">บันทึก</button>
+<button id="testApiBtn" type="button" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-700 text-white font-medium">ทดสอบ</button>
+<button id="clearApiBtn" type="button" class="text-xs px-2 py-1.5 rounded-lg border border-rose-200 text-rose-600">ลบ</button>
+<button id="resetProjectBtnDesktop" type="button" class="hidden lg:inline-flex text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600">รีเซ็ต</button>
+</div>
+</div>
+<nav class="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+<button type="button" data-target="step1" class="step-nav-btn shrink-0 px-3 py-1 rounded-full bg-pink-50 text-pink-700 font-semibold border border-pink-200">1. สินค้า & ลิงก์</button>
+<button type="button" data-target="step2" class="step-nav-btn shrink-0 px-3 py-1 rounded-full bg-white text-slate-600 border border-slate-200">2. พรีเซนเตอร์ & วิดีโอ</button>
+<button type="button" data-target="step3" class="step-nav-btn shrink-0 px-3 py-1 rounded-full bg-white text-slate-600 border border-slate-200">3. สคริปต์ & Prompt</button>
+<button type="button" data-target="step4" class="step-nav-btn shrink-0 px-3 py-1 rounded-full bg-white text-slate-600 border border-slate-200">4. ตรวจคลิป QC</button>
+<button type="button" data-target="step5" class="step-nav-btn shrink-0 px-3 py-1 rounded-full bg-orange-50 text-rose-700 font-semibold border border-orange-200">5. ชุดภาพขาย 3 รูป & ตะกร้า</button>
+</nav>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 mt-5 space-y-6">
+<!-- 1. PRODUCT -->
+<section id="step1" class="glass-card rounded-2xl p-5 scroll-mt-32">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+<div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-full step-badge text-white font-bold flex items-center justify-center text-sm">1</span><h2 class="text-base sm:text-lg font-bold">รูปสินค้า (สูงสุด 6 รูป) & ข้อมูลจากร้าน</h2></div>
+<button id="fillSampleDataBtn" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-pink-50 text-pink-700 border border-pink-200 font-medium">+ ตัวอย่าง</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<div class="lg:col-span-6 space-y-3">
+<div class="flex justify-between items-center"><label class="text-sm font-semibold">รูปสินค้า (<span id="imgCountText" class="text-pink-600">0/6</span>)</label><button id="clearAllImgsBtn" type="button" class="text-xs text-rose-600 hidden">ลบทั้งหมด</button></div>
+<div id="productImgDropzone" class="border-2 border-dashed border-pink-300 rounded-xl p-4 text-center bg-pink-50/40 cursor-pointer"><input id="productImgInput" type="file" accept="image/*" multiple class="hidden" /><p class="text-sm font-medium">📷 คลิกเลือกรูปสินค้า (JPG/PNG สูงสุด 6 รูป)</p></div>
+<div id="productImgGrid" class="grid grid-cols-3 gap-2"></div>
+</div>
+<div class="lg:col-span-6 space-y-3">
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1.5">
+<div class="flex justify-between items-center"><label for="productUrlInput" class="text-xs font-bold">ลิงก์ Shopee / TikTok Showcase</label><span id="platformBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-semibold">รอวางลิงก์</span></div>
+<input id="productUrlInput" type="url" placeholder="https://shopee.co.th/... หรือ https://vt.tiktok.com/..." class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 bg-white" />
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+<div><label for="productNameInput" class="block text-xs font-semibold mb-1">ชื่อสินค้า (ตามจริง)</label><input id="productNameInput" type="text" placeholder="เช่น Aura Glow Serum" class="w-full text-sm rounded-xl border border-slate-300 px-3 py-2 bg-white" /></div>
+<div><label for="productCategorySelect" class="block text-xs font-semibold mb-1">หมวดหมู่</label>
+<select id="productCategorySelect" class="w-full text-sm rounded-xl border border-slate-300 px-2.5 py-2 bg-white">
+<option value="เซรั่ม / เอสเซนส์">เซรั่ม / เอสเซนส์</option>
+<option value="ครีม / มอยส์เจอร์ไรเซอร์">ครีม / มอยส์เจอร์ไรเซอร์</option>
+<option value="ครีมกันแดด">ครีมกันแดด</option>
+<option value="คลีนเซอร์ / โฟมล้างหน้า">คลีนเซอร์ / โฟมล้างหน้า</option>
+<option value="โทนเนอร์ / น้ำตบ">โทนเนอร์ / น้ำตบ</option>
+<option value="มาส์กหน้า">มาส์กหน้า</option>
+<option value="ลิปแคร์ / เครื่องสำอาง">ลิปแคร์ / เครื่องสำอาง</option>
+<option value="สครับ / บอดี้แคร์">สครับ / บอดี้แคร์</option>
+<option value="อาหารเสริม / สุขภาพ">อาหารเสริม / สุขภาพ</option>
+<option value="แฟชั่น / เครื่องแต่งกาย">แฟชั่น / เครื่องแต่งกาย</option>
+<option value="ของใช้ในบ้าน / ไลฟ์สไตล์">ของใช้ในบ้าน / ไลฟ์สไตล์</option>
+<option value="แกดเจ็ต / สินค้าทั่วไป">แกดเจ็ต / สินค้าทั่วไป</option>
+</select></div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1"><label for="storeInfoInput" class="text-xs font-semibold">รายละเอียดจากร้านค้า *</label><button id="smartParseBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-slate-100 border font-semibold">✨ ดึงชื่อ & ลิงก์</button></div>
+<textarea id="storeInfoInput" rows="4" placeholder="ก๊อปข้อมูลจริงจากหน้าร้านมาวางที่นี่ (ปริมาณ ส่วนผสม เนื้อสัมผัส วิธีใช้ ราคา)" class="w-full text-sm rounded-xl border border-slate-300 px-3 py-2 bg-white"></textarea>
+</div>
+<div class="flex flex-wrap items-center gap-2"><button id="analyzeProductBtn" type="button" class="btn-primary text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">🔍 วิเคราะห์สินค้าตามจริงด้วย AI</button><span id="analysisStatusText" class="text-xs text-slate-500"></span></div>
+</div>
+</div>
+<div id="productAnalysisBox" class="mt-4 hidden rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-xs space-y-2">
+<div class="font-bold text-emerald-900">ผลการวิเคราะห์สินค้าตามจริง (แก้ไขได้)</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+<div><label class="font-semibold block mb-0.5">รูปทรง</label><input id="anaShape" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+<div><label class="font-semibold block mb-0.5">สี</label><input id="anaColor" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+<div><label class="font-semibold block mb-0.5">ขนาด</label><input id="anaSize" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+<div><label class="font-semibold block mb-0.5">ฉลาก & โลโก้</label><input id="anaLabelLogo" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+<div><label class="font-semibold block mb-0.5">ตัวอักษรจริง</label><input id="anaText" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+<div><label class="font-semibold block mb-0.5">เนื้อสัมผัส</label><input id="anaTexture" type="text" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1" /></div>
+</div>
+<div><label class="font-semibold block mb-0.5">สรุปคุณสมบัติจริง</label><textarea id="anaFacts" rows="2" class="w-full rounded-lg border border-emerald-200 bg-white px-2 py-1"></textarea></div>
+</div>
+</section>
+
+<!-- 2. PRESENTER & VIDEO SETTINGS -->
+<section id="step2" class="glass-card rounded-2xl p-5 scroll-mt-32 space-y-4">
+<div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-full step-badge text-white font-bold flex items-center justify-center text-sm">2</span><h2 class="text-base sm:text-lg font-bold">พรีเซนเตอร์ AI & ตั้งค่าวิดีโอ ASMR</h2></div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="presenterCardsContainer"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-slate-50 border rounded-xl p-3.5">
+<div class="lg:col-span-8"><label for="presenterPromptInput" class="block text-xs font-semibold mb-1">รายละเอียดพรีเซนเตอร์ (อายุ 20 ปี หน้าขาวใสฉ่ำโกลว์)</label><textarea id="presenterPromptInput" rows="2" class="w-full text-xs rounded-xl border px-3 py-2 bg-white"></textarea></div>
+<div class="lg:col-span-4 space-y-1.5">
+<label class="block text-xs font-semibold">รูปพรีเซนเตอร์ AI (ใช้วางคู่สินค้าข้อ 5)</label>
+<div class="flex items-center gap-2"><label for="presenterImgInput" class="cursor-pointer px-3 py-1.5 rounded-lg border border-pink-300 bg-white text-xs font-semibold text-pink-700">+ เลือกรูป</label><input id="presenterImgInput" type="file" accept="image/*" class="hidden" /><button id="clearPresenterImgBtn" type="button" class="hidden text-xs text-rose-600">ลบ</button></div>
+<div id="presenterImgPreviewWrap" class="hidden flex items-center gap-2 bg-white p-1.5 rounded-lg border"><img id="presenterImgPreview" class="w-10 h-10 object-cover rounded" /><span class="text-xs text-emerald-700 font-semibold">แนบรูปแล้ว</span></div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<div class="bg-slate-50 rounded-xl p-3 border"><label class="block text-xs font-semibold mb-1.5">สัดส่วนวิดีโอ</label><div class="grid grid-cols-3 gap-1" id="aspectRatioGroup"><button type="button" data-value="9:16" class="option-pill active border bg-white rounded-lg py-1.5 text-xs font-bold">9:16</button><button type="button" data-value="1:1" class="option-pill border bg-white rounded-lg py-1.5 text-xs font-bold">1:1</button><button type="button" data-value="16:9" class="option-pill border bg-white rounded-lg py-1.5 text-xs font-bold">16:9</button></div></div>
+<div class="bg-slate-50 rounded-xl p-3 border"><label class="block text-xs font-semibold mb-1.5">ความละเอียด</label><div class="grid grid-cols-2 gap-1" id="resolutionGroup"><button type="button" data-value="720p" class="option-pill active border bg-white rounded-lg py-1.5 text-xs font-bold">720p</button><button type="button" data-value="1080p" class="option-pill border bg-white rounded-lg py-1.5 text-xs font-bold">1080p</button></div></div>
+<div class="bg-slate-50 rounded-xl p-3 border"><label class="block text-xs font-semibold mb-1.5">ความยาว</label><div class="grid grid-cols-2 gap-1" id="durationGroup"><button type="button" data-value="10" class="option-pill active border bg-white rounded-lg py-1.5 text-xs font-bold">10 วิ (1 ฉาก)</button><button type="button" data-value="20" class="option-pill border bg-white rounded-lg py-1.5 text-xs font-bold">20 วิ (2 ฉาก)</button></div></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2" id="demoStyleGroup">
+<button type="button" data-value="ASMR Texture Close-up & Facial Apply" class="option-pill active text-left border bg-white rounded-xl p-2 text-xs font-bold">1. ASMR เนื้อสัมผัส & ทาผิวใกล้ๆ</button>
+<button type="button" data-value="Unboxing & Clear Label Product Showcase" class="option-pill text-left border bg-white rounded-xl p-2 text-xs font-bold">2. แกะกล่อง & โชว์บรรจุภัณฑ์ชัดๆ</button>
+<button type="button" data-value="Morning/Night Real Skincare Routine" class="option-pill text-left border bg-white rounded-xl p-2 text-xs font-bold">3. รูทีนดูแลผิว เช้า/ก่อนนอน</button>
+<button type="button" data-value="Hand Swatch & Absorption Comparison" class="option-pill text-left border bg-white rounded-xl p-2 text-xs font-bold">4. สวอทช์เนื้อ & ทดสอบการซึมบนผิว</button>
+<button type="button" data-value="Studio Glow Aesthetic Vanity Demo" class="option-pill text-left border bg-white rounded-xl p-2 text-xs font-bold">5. สตูดิโอโทนคลีนมินิมอล Luxury</button>
+<button type="button" data-value="Gentle Foam Wash & Fresh Skin Rinse" class="option-pill text-left border bg-white rounded-xl p-2 text-xs font-bold">6. ตีฟอง ล้างหน้า & ซับผิวสะอาด</button>
+</div>
+<div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs">
+<div><strong class="text-purple-900">โหมด ASMR (No BGM)</strong> — พร้อมพากย์เสียงไทยทับใน CapCut / TikTok</div>
+<label class="inline-flex items-center cursor-pointer shrink-0"><input id="asmrToggle" type="checkbox" checked class="mr-1.5 accent-pink-600 w-4 h-4" /><span class="font-bold text-purple-900">เปิด ASMR</span></label>
+</div>
+</section>
+
+<!-- 3. SCRIPT & PROMPT -->
+<section id="step3" class="glass-card rounded-2xl p-5 scroll-mt-32">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+<div class="flex items-center gap-2.5"><span class="w-7 h-7 rounded-full step-badge text-white font-bold flex items-center justify-center text-sm">3</span><h2 class="text-base sm:text-lg font-bold">สร้าง Hook, บทพูดครบข้อมูลร้าน, Prompt & แคปชั่น</h2></div>
+<button id="generateAllBtn" type="button" class="btn-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow">⚡ สร้างสคริปต์ & Prompt ทันที</button>
+</div>
+<div class="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">⚠️ กฎความตรงปก: Hook กระชับ 10–14 คำ, บทพูดเปิดลบ-ปิดบวก เก็บใจความสำคัญจากร้านจริงครบ + สรุปจุดเด่นและวิธีใช้ส่งเข้าชุดภาพข้อ 5 อัตโนมัติ ห้ามใช้คำว่า "ตรงปก 100%"</div>
+<div id="outputEmptyState" class="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl text-sm text-slate-500">กดปุ่มด้านบนเพื่อสร้างสคริปต์และ Prompt</div>
+<div id="outputContainer" class="hidden space-y-4">
+<div class="flex flex-wrap justify-end gap-2">
+<button id="saveToQueueFromStep4Btn" type="button" class="text-xs px-3.5 py-2 rounded-lg bg-emerald-600 text-white font-semibold">📌 เก็บเข้าคิวปักตะกร้า</button>
+<button id="copyAllOutputsBtn" type="button" class="text-xs px-3.5 py-2 rounded-lg bg-slate-800 text-white font-semibold">คัดลอกทั้งหมด</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+<div class="rounded-xl border border-pink-200 bg-pink-50/40 p-3.5"><div class="flex justify-between mb-1.5"><span class="text-xs font-bold text-pink-700">Hook 3 วิแรก</span><button id="copyHookBtn" type="button" class="text-xs px-2.5 py-0.5 rounded bg-white border border-pink-300 text-pink-700 font-semibold">คัดลอก</button></div><p id="hookOutput" class="text-sm font-semibold whitespace-pre-wrap"></p></div>
+<div class="rounded-xl border border-purple-200 bg-purple-50/40 p-3.5"><div class="flex justify-between mb-1.5"><span class="text-xs font-bold text-purple-700">แคปชั่น & แฮชแท็ก</span><button id="copyCaptionBtn" type="button" class="text-xs px-2.5 py-0.5 rounded bg-white border border-purple-300 text-purple-700 font-semibold">คัดลอก</button></div><p id="captionOutput" class="text-sm whitespace-pre-wrap"></p></div>
+</div>
+<div class="rounded-xl border bg-white p-3.5 space-y-3">
+<div class="flex flex-wrap justify-between items-center gap-2"><span class="text-sm font-bold">บทพูดพากย์เสียง (ไม่เกินฉากละ 10 วิ)</span>
+<div class="flex flex-wrap gap-1.5"><button id="speakAllScriptsBtn" type="button" class="text-xs px-2.5 py-1 rounded bg-pink-50 text-pink-700 border border-pink-200 font-semibold">🔊 ฟังเสียง</button><button id="stopSpeakBtn" type="button" class="text-xs px-2.5 py-1 rounded bg-slate-100 font-semibold">⏹️ หยุด</button><button id="copyAllScriptsBtn" type="button" class="text-xs px-2.5 py-1 rounded bg-slate-100 font-semibold">คัดลอกบทพูด</button></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<div class="rounded-lg bg-slate-50 border p-3"><div class="flex justify-between mb-1"><span class="text-xs font-bold">ฉาก 1 (0–10 วิ)</span><button id="copyScriptScene1Btn" type="button" class="text-xs px-2 py-0.5 rounded bg-white border">คัดลอก</button></div><p id="scriptScene1Output" class="text-sm whitespace-pre-wrap"></p></div>
+<div id="scriptScene2Card" class="hidden rounded-lg bg-slate-50 border p-3"><div class="flex justify-between mb-1"><span class="text-xs font-bold">ฉาก 2 (10–20 วิ)</span><button id="copyScriptScene2Btn" type="button" class="text-xs px-2 py-0.5 rounded bg-white border">คัดลอก</button></div><p id="scriptScene2Output" class="text-sm whitespace-pre-wrap"></p></div>
+</div>
+</div>
+<div class="rounded-xl bg-slate-900 text-slate-100 p-3.5"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pink-600">Prompt ฉากที่ 1</span><button id="copyPromptScene1Btn" type="button" class="text-xs px-3 py-1 rounded-lg bg-emerald-600 font-semibold">คัดลอก Prompt 1</button></div><pre id="promptScene1Output" class="text-xs font-mono whitespace-pre-wrap max-h-64 overflow-y-auto"></pre></div>
+<div id="promptScene2Card" class="hidden rounded-xl bg-slate-900 text-slate-100 p-3.5"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-600">Prompt ฉากที่ 2</span><button id="copyPromptScene2Btn" type="button" class="text-xs px-3 py-1 rounded-lg bg-emerald-600 font-semibold">คัดลอก Prompt 2</button></div><pre id="promptScene2Output" class="text-xs font-mono whitespace-pre-wrap max-h-64 overflow-y-auto"></pre></div>
+</div>
+</section>
+
+<!-- 4. VIDEO QC -->
+<section id="step4" class="glass-card rounded-2xl p-5 scroll-mt-32">
+<div class="flex items-center gap-2.5 mb-4"><span class="w-7 h-7 rounded-full step-badge text-white font-bold flex items-center justify-center text-sm">4</span><h2 class="text-base sm:text-lg font-bold">ตรวจคลิปวิดีโอตรงปก (AI Video QC)</h2></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<div class="lg:col-span-5 space-y-3">
+<div id="videoDropzone" class="border-2 border-dashed border-purple-300 rounded-xl p-4 text-center bg-purple-50/40 cursor-pointer"><input id="videoFileInput" type="file" accept="video/*" class="hidden" /><p class="text-sm font-semibold">📤 คลิกนำเข้าคลิปวิดีโอ (MP4/MOV)</p></div>
+<div id="videoPreviewWrap" class="hidden space-y-2.5 bg-slate-50 p-3 rounded-xl border">
+<video id="qcVideoPlayer" controls playsinline class="w-full max-h-64 rounded bg-black"></video>
+<div class="flex justify-between text-xs"><div id="videoTechSpec"></div><button id="clearVideoBtn" type="button" class="text-rose-600">ลบ</button></div>
+<button id="inspectVideoBtn" type="button" class="w-full btn-primary text-white text-sm font-bold py-2 rounded-xl">✅ ตรวจความตรงปกด้วย AI</button>
+</div>
+</div>
+<div class="lg:col-span-7">
+<div id="qcEmptyState" class="min-h-[160px] flex items-center justify-center text-center p-4 rounded-xl border-2 border-dashed text-xs text-slate-400">อัปโหลดรูปสินค้าข้อ 1 + นำเข้าคลิปด้านซ้าย แล้วกดตรวจ QC</div>
+<div id="qcResultWrap" class="hidden space-y-3"><div id="qcVerdictBanner" class="rounded-xl p-3 border"></div><div id="qcFramesStrip" class="grid grid-cols-6 gap-1.5"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="qcDimensionsGrid"></div><div id="qcAdviceBox" class="rounded-xl bg-slate-50 border p-3 text-xs"></div></div>
+</div>
+</div>
+</section>
+
+<!-- 5. 3-SLIDE SALES ALBUM (STILL IMAGES) + SWAP PROMPT + QUEUE -->
+<section id="step5" class="glass-card rounded-2xl p-5 scroll-mt-32">
+<div class="flex items-center gap-2.5 mb-4"><span class="w-7 h-7 rounded-full step-badge text-white font-bold flex items-center justify-center text-sm">5</span><h2 class="text-base sm:text-lg font-bold">แต่งชุดภาพโพสต์ขาย 3 รูป (เปิดตัว • จุดเด่น • วิธีใช้) & คิวปักตะกร้า</h2></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<div class="lg:col-span-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+<div class="flex justify-between items-center"><h3 class="text-sm font-bold">📸 ชุดภาพนิ่ง 3 รูป (1080px)</h3><span id="makerRatioTag" class="text-[11px] px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 font-semibold">4:5</span></div>
+
+<div class="grid grid-cols-3 gap-1.5" id="slideTabGrp">
+<button type="button" data-slide="0" class="option-pill active border bg-white rounded-xl py-2 px-1 text-xs font-bold">1. เปิดตัวสินค้า</button>
+<button type="button" data-slide="1" class="option-pill border bg-white rounded-xl py-2 px-1 text-xs font-bold">2. จุดเด่น 3 ข้อ</button>
+<button type="button" data-slide="2" class="option-pill border bg-white rounded-xl py-2 px-1 text-xs font-bold">3. สาธิตวิธีใช้</button>
+</div>
+
+<div id="makerImgPick" class="flex flex-wrap gap-1.5 items-center text-xs"></div>
+
+<div class="grid grid-cols-3 gap-1.5 bg-white border border-pink-200 rounded-xl p-2">
+<button id="cutoutAiBtn" type="button" class="text-[11px] py-1.5 px-2 rounded-lg bg-pink-600 text-white font-bold">✂️ ไดคัทสินค้า</button>
+<button id="cutoutFastBtn" type="button" class="text-[11px] py-1.5 px-2 rounded-lg bg-amber-500 text-white font-bold">🪄 ลบพื้นเรียบ</button>
+<button id="cutoutUndoBtn" type="button" class="text-[11px] py-1.5 px-2 rounded-lg border text-slate-700 font-semibold">↩️ รูปเดิม</button>
+</div>
+
+<div class="bg-white border border-purple-200 rounded-xl p-2 space-y-1.5">
+<div class="flex flex-wrap items-center justify-between gap-1.5">
+<span class="text-[11px] font-bold text-purple-800">👤 วางคู่พรีเซนเตอร์ AI:</span>
+<div class="flex gap-1">
+<label for="makerPresInput" class="cursor-pointer text-[11px] px-2 py-1 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">+ รูปคน AI</label>
+<input id="makerPresInput" type="file" accept="image/*" class="hidden" />
+<button id="cutoutPresAiBtn" type="button" class="text-[11px] px-2 py-1 rounded bg-purple-600 text-white font-bold">✂️ ไดคัทคน</button>
+</div>
+</div>
+<select id="makerPresLayoutSelect" class="w-full text-xs rounded-lg border px-2 py-1 bg-slate-50">
+<option value="none">ไม่ใส่พรีเซนเตอร์ (โชว์เฉพาะสินค้า)</option>
+<option value="left">👤 ซ้าย: พรีเซนเตอร์ AI | ขวา: สินค้า</option>
+<option value="right">ขวา: พรีเซนเตอร์ AI | ซ้าย: สินค้า</option>
+<option value="back">👤 หลัง: พรีเซนเตอร์ AI | หน้า: สินค้า</option>
+</select>
+</div>
+
+<div class="grid grid-cols-2 gap-1.5">
+<select id="makerThemeSelect" class="text-xs rounded-lg border px-2 py-1.5 bg-white"><option value="beauty">🌸 บิวตี้โกลว์</option><option value="marble">🤍 หินอ่อนหรู</option><option value="sunlight">☀️ แสงแดดเกาหลี</option><option value="shopee">🟠 Shopee ส้ม</option><option value="tiktok">🎵 TikTok หรู</option><option value="clean">🍃 คลีนมินิมอล</option></select>
+<select id="makerRatioSelect" class="text-xs rounded-lg border px-2 py-1.5 bg-white"><option value="4:5" selected>4:5 โพสต์ขาย (FB/IG)</option><option value="1:1">1:1 สินค้า (Shopee)</option><option value="9:16">9:16 โหมดภาพ (TikTok)</option></select>
+</div>
+
+<div id="slidePanel0" class="bg-white border border-pink-200 rounded-xl p-2.5 space-y-1.5">
+<div class="text-[11px] font-bold text-pink-700">🚀 ข้อความรูปที่ 1: เปิดตัวด้วย Hook</div>
+<div class="grid grid-cols-2 gap-1.5">
+<input id="makerTagInput" type="text" value="" placeholder="ป้ายมุมบน (เว้นว่างได้)" class="text-xs rounded-lg border px-2 py-1" />
+<input id="makerPriceInput" type="text" placeholder="ป้ายล่าง/ราคา (เว้นว่างได้)" class="text-xs rounded-lg border px-2 py-1" />
+</div>
+<input id="makerOverlayInput" type="text" placeholder="พาดหัว Hook เปิดตัว (ดึงจาก Hook อัตโนมัติ)" class="w-full text-xs font-semibold rounded-lg border px-2.5 py-1.5" />
+</div>
+
+<div id="slidePanel1" class="hidden bg-white border border-emerald-200 rounded-xl p-2.5 space-y-1.5">
+<div class="text-[11px] font-bold text-emerald-800">✅ ข้อความรูปที่ 2: จุดเด่นหลักๆ ตามร้าน</div>
+<input id="makerFeat1" type="text" value="เนื้อสัมผัสบางเบา ซึมไวไม่เหนอะหนะ" class="w-full text-xs rounded border px-2 py-1" />
+<input id="makerFeat2" type="text" value="ช่วยเติมความชุ่มชื้นให้ผิวดูอิ่มน้ำ" class="w-full text-xs rounded border px-2 py-1" />
+<input id="makerFeat3" type="text" value="ใช้งานง่าย เหมาะกับการดูแลผิวทุกวัน" class="w-full text-xs rounded border px-2 py-1" />
+</div>
+
+<div id="slidePanel2" class="hidden bg-white border border-purple-200 rounded-xl p-2.5 space-y-1.5">
+<div class="text-[11px] font-bold text-purple-800">📖 ข้อความรูปที่ 3: บอกวิธีการใช้งาน + พิกัดตะกร้าส้ม</div>
+<input id="makerStep1" type="text" value="เปิดฝา หยด/แต้มผลิตภัณฑ์พอประมาณ" class="w-full text-xs rounded border px-2 py-1" />
+<input id="makerStep2" type="text" value="ทาและเกลี่ยเบาๆ ให้ซึมเข้าผิวหน้า" class="w-full text-xs rounded border px-2 py-1" />
+<input id="makerStep3" type="text" value="ใช้เป็นประจำ เช้า-เย็น เพื่อผลลัพธ์ที่ดี" class="w-full text-xs rounded border px-2 py-1" />
+<input id="makerBasketInput" type="text" value="พิกัดตะกร้าส้ม 👇" placeholder="ข้อความป้ายตะกร้าด้านล่าง" class="w-full text-xs font-semibold rounded border border-orange-200 bg-orange-50/40 px-2 py-1" />
+</div>
+
+<div class="flex flex-wrap items-center justify-between gap-2 text-xs bg-white border rounded-lg px-2.5 py-1.5">
+<label class="flex items-center gap-1.5">ขยายสินค้า: <input id="makerZoomRange" type="range" min="75" max="135" value="100" class="w-24 accent-pink-600" /></label>
+<label class="flex items-center gap-1 cursor-pointer"><input id="makerSparkleChk" type="checkbox" checked class="accent-pink-600" /> แสงวิ้ง</label>
+</div>
+
+<div class="bg-slate-900 rounded-xl p-2 flex justify-center"><canvas id="makerCanvas" width="1080" height="1350" class="w-full max-w-[240px] max-h-[360px] object-contain rounded bg-black"></canvas></div>
+<p id="makerStatusText" class="text-[11px] text-slate-600 text-center font-medium">สลับแท็บ 1–3 เพื่อเช็กตัวอย่าง แล้วกดสร้างครบชุด 3 รูปได้เลย</p>
+
+<div class="grid grid-cols-2 gap-2">
+<button id="makerSaveOneBtn" type="button" class="text-xs py-2.5 rounded-xl border border-pink-300 bg-white text-pink-700 font-bold">🖼️ บันทึกรูปนี้ (PNG)</button>
+<button id="makerSaveSetBtn" type="button" class="btn-primary text-white text-xs font-bold py-2.5 rounded-xl">📦 สร้างครบชุด 3 รูป</button>
+</div>
+<div id="makerSetGallery" class="grid grid-cols-3 gap-2"></div>
+</div>
+
+<!-- Right Column: Swap Prompt + Queue -->
+<div class="lg:col-span-6 space-y-4">
+<div class="bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-2xl p-4 space-y-2.5">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<h3 class="text-sm font-bold text-pink-900">✨ เปลี่ยนนางแบบ/นายแบบร้าน (ใช้ฟรีในแอป Gemini)</h3>
+<button id="genSwapPromptBtn" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-pink-600 text-white font-bold">สร้าง Prompt เปลี่ยนคน</button>
+</div>
+<p class="text-[11px] text-slate-600">นำ Prompt นี้ + แนบรูปสินค้าของร้าน + รูปพรีเซนเตอร์ AI ไปวางในแชทปกติของแอป Gemini (โหมดสร้างภาพฟรี) แล้วเซฟภาพกลับมาใส่ข้อ 1 เพื่อทำชุดภาพขายได้เลย</p>
+<div id="swapPromptBox" class="hidden space-y-2">
+<pre id="swapPromptOut" class="text-xs font-mono whitespace-pre-wrap bg-slate-900 text-slate-100 p-3 rounded-xl max-h-48 overflow-y-auto"></pre>
+<button id="copySwapPromptBtn" type="button" class="w-full text-xs py-2 rounded-lg bg-emerald-600 text-white font-bold">📋 คัดลอก Prompt ไปวางในแอป Gemini</button>
+</div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+<div class="flex flex-wrap justify-between items-center gap-2">
+<h3 class="text-sm font-bold">📌 คิวโพสต์ & ปักตะกร้า</h3>
+<div class="flex gap-1.5"><button id="addCurrentToQueueBtn" type="button" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold">+ เพิ่มเข้าคิว</button><button id="clearDoneQueueBtn" type="button" class="text-xs px-2.5 py-1.5 rounded-lg border text-slate-600">ล้างที่เสร็จแล้ว</button></div>
+</div>
+<div id="queueListContainer" class="space-y-2 max-h-[420px] overflow-y-auto"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+const API_KEY='skincare_ai_studio_api_key_v1',MOD_KEY='skincare_ai_studio_model_v1',Q_KEY='affiliate_posting_queue_v1';
+const FIDELITY='[ข้อกำหนดบังคับ: คงรูปทรง ฉลาก โลโก้ สี ขนาด เนื้อสัมผัส และตัวอักษรของสินค้าตามจริงให้เห็นเด่นชัด ห้ามแต่งเติมและเปลี่ยนแปลงเด็ดขาด | STRICT PRODUCT FIDELITY: Maintain exact original shape, label, logo, colors, size, texture, and typography clearly visible. DO NOT modify.]';
+const PRESETS=[
+{id:'female_1',g:'หญิง',n:'น้องลินดา (หญิง 1)',s:'ขาวใสฉ่ำโกลว์',hc:'#3b2417',sc:'#fde8df',tc:'#fce7f3',p:'Photorealistic 20-year-old Thai-Asian female model, naturally fair luminous glass skin, clear unobstructed full face, soft natural makeup, neat hair, pastel top, soft studio daylight.'},
+{id:'female_2',g:'หญิง',n:'น้องมิวสิค (หญิง 2)',s:'ขาวอมชมพูฉ่ำน้ำ',hc:'#1f1b24',sc:'#fce4e4',tc:'#f3e8ff',p:'Photorealistic 20-year-old Asian young woman, radiant fair dewy rosy-glow skin, crystal clear visible face, hair tied back cleanly, white camisole, luxury skincare lighting.'},
+{id:'male_1',g:'ชาย',n:'น้องเจย์ (ชาย 1)',s:'ขาวใสผิวสะอาดตา',hc:'#1e293b',sc:'#f9e6dc',tc:'#e0f2fe',p:'Photorealistic 20-year-old Thai-Asian male model, naturally fair bright clear dewy skin, sharp unobstructed face, neat short hair, crisp white tee, natural window daylight.'},
+{id:'male_2',g:'ชาย',n:'น้องคิม (ชาย 2)',s:'ขาวเนียนสุขภาพดี',hc:'#27272a',sc:'#fbe8df',tc:'#f1f5f9',p:'Photorealistic 20-year-old Asian young man, bright fair hydrated skin, clear visible face, gentle confident smile, minimalist beige shirt, aesthetic skincare lighting.'}
+];
+const st={imgs:[],curSlide:0,slideImg:[0,0,0],pid:'female_1',pimg:null,ar:'9:16',res:'720p',dur:10,style:'ASMR Texture Close-up & Facial Apply',asmr:true,resData:null,qcFile:null,qcMeta:null,rmbgFn:null};
+const $=id=>document.getElementById(id);
+const toast=(m,t='info')=>{const d=document.createElement('div');const c={success:'bg-emerald-600',error:'bg-rose-600',warning:'bg-amber-500',info:'bg-slate-800'}[t]||'bg-slate-800';d.className=`pointer-events-auto text-xs font-medium px-4 py-2.5 rounded-xl text-white shadow-lg ${c}`;d.textContent=m;$('toastContainer').appendChild(d);setTimeout(()=>d.remove(),3200);};
+const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+async function copyTxt(t,b){if(!t||!String(t).trim())return toast('ไม่มีข้อความให้คัดลอก','warning');let ok=false;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(t);ok=true;}}catch{}if(!ok){try{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.top='-9999px';document.body.appendChild(a);a.select();ok=document.execCommand('copy');a.remove();}catch{}}if(ok){toast('คัดลอกแล้ว!','success');if(b){const o=b.innerHTML;b.innerHTML='✓ คัดลอกแล้ว';setTimeout(()=>b.innerHTML=o,1500);}}else toast('คัดลอกอัตโนมัติไม่ได้','error');}
+
+function compImg(f,max=1080){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();r.onerror=()=>rej(new Error('อ่านไฟล์ไม่ได้'));
+    r.onload=e=>{const i=new Image();i.onerror=()=>rej(new Error('ภาพไม่ถูกต้อง'));i.onload=()=>{
+      let w=i.width,h=i.height;if(w>max||h>max){if(w>=h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
+      const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.drawImage(i,0,0,w,h);
+      let hasAlpha=false;if(f.type==='image/png'){const pd=ctx.getImageData(0,0,w,h).data;for(let k=3;k<pd.length;k+=40){if(pd[k]<245){hasAlpha=true;break;}}}
+      const mime=hasAlpha?'image/png':'image/jpeg',u=c.toDataURL(mime,.9),ci=new Image();
+      ci.onload=()=>res({base64:u.split(',')[1],mimeType:mime,dataUrl:u,imgEl:ci,origUrl:u,origEl:ci,cutout:hasAlpha});ci.src=u;
+    };i.src=e.target.result;};r.readAsDataURL(f);
+  });
+}
+
+function parseJSON(t){let s=(t||'').trim().replace(/^\x60\x60\x60(?:json)?\s*/i,'').replace(/\s*\x60\x60\x60$/i,'').trim();try{return JSON.parse(s);}catch{const a=s.indexOf('{'),b=s.lastIndexOf('}');if(a!==-1&&b>a)return JSON.parse(s.slice(a,b+1));throw new Error('AI ตอบไม่ตรงรูปแบบ JSON');}}
+function setLoad(b,on,txt='กำลังทำงาน...'){if(!b)return;if(on){b.dataset.o=b.innerHTML;b.disabled=true;b.innerHTML=`<span class="spinner"></span> ${txt}`;}else{b.disabled=false;if(b.dataset.o)b.innerHTML=b.dataset.o;}}
+function detPlat(){const u=($('productUrlInput').value||'').toLowerCase().trim(),b=$('platformBadge');if(u.includes('shopee')||u.includes('shp.ee')){b.textContent='🟠 Shopee';b.className='text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 font-bold';return'Shopee';}if(u.includes('tiktok')){b.textContent='🎵 TikTok';b.className='text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold';return'TikTok';}b.textContent=u?'🔗 ลิงก์ทั่วไป':'รอวางลิงก์';b.className='text-[11px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-semibold';return u?'ทั่วไป':'ไม่ระบุ';}
+function updBadge(k){const b=$('apiStatusBadge');if(k&&k.trim().length>10){b.textContent='บันทึกแล้ว';b.className='text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold';}else{b.textContent='ยังไม่ได้บันทึก';b.className='text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium';}}
+function saveKey(n=false){const k=$('apiKeyInput').value.trim();try{if(k)localStorage.setItem(API_KEY,k);else localStorage.removeItem(API_KEY);localStorage.setItem(MOD_KEY,$('modelSelect').value);}catch{}updBadge(k);if(n)toast(k?'บันทึก API Key ถาวรแล้ว':'กรุณากรอก API Key',k?'success':'warning');}
+async function callGemini(parts,json=true){
+  const k=$('apiKeyInput').value.trim()||(localStorage.getItem(API_KEY)||'').trim();if(!k){toast('กรุณาใส่ Gemini API Key ด้านบนก่อน','warning');$('apiKeyInput').focus();throw new Error('NO_KEY');}saveKey(false);
+  const sel=$('modelSelect').value,list=sel==='auto'?['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-2.5-flash']:[sel,'gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-2.5-flash'].filter((v,i,a)=>a.indexOf(v)===i);
+  let errLast=null;
+  for(const m of list){try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(k)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:json?{responseMimeType:'application/json'}:{}})});const d=await r.json();if(!r.ok){const msg=d?.error?.message||`HTTP ${r.status}`;if(r.status===404||r.status===503||/not found|unavailable/i.test(msg)){errLast=new Error(msg);continue;}throw new Error(msg);}const txt=d?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';if(!txt)throw new Error('AI ไม่ส่งผลลัพธ์');return{text:txt,model:m};}catch(e){errLast=e;if(/API key not valid|API_KEY_INVALID/i.test(e.message))throw new Error('API Key ไม่ถูกต้อง');}}
+  throw errLast||new Error('เชื่อมต่อ Gemini ไม่สำเร็จ');
+}
+
+function activeImgIdx(){return st.imgs.length?(st.slideImg[st.curSlide]%st.imgs.length):0;}
+function renderImgs(){
+  $('imgCountText').textContent=`${st.imgs.length}/6`;$('clearAllImgsBtn').classList.toggle('hidden',!st.imgs.length);
+  [0,1,2].forEach(k=>{if(st.slideImg[k]>=st.imgs.length)st.slideImg[k]=st.imgs.length?Math.min(k,st.imgs.length-1):0;});
+  const curIdx=activeImgIdx();
+  $('productImgGrid').innerHTML=st.imgs.map((x,i)=>`<div class="relative rounded-xl overflow-hidden border aspect-square bg-white"><img src="${x.dataUrl}" class="w-full h-full object-contain"/><button type="button" data-del="${x.id}" class="rm-img absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600 text-white text-xs font-bold">×</button><div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] px-1">#${i+1} ${x.cutout?'✂️':''}</div></div>`).join('');
+  $('makerImgPick').innerHTML=st.imgs.length?`<span>เลือกรูปรูปที่ ${st.curSlide+1}:</span>`+st.imgs.map((x,i)=>`<button type="button" data-pick="${i}" class="px-2 py-0.5 rounded-md border font-bold ${curIdx===i?'bg-pink-600 text-white border-pink-600':'bg-white'}">รูป ${i+1}${x.cutout?' ✂️':''}</button>`).join(''):'<span class="text-slate-400">อัปโหลดรูปในข้อ 1 เพื่อทำชุดภาพขาย</span>';
+  drawSlide(st.curSlide);
+}
+async function addImgs(files){
+  const prevLen=st.imgs.length,fs=Array.from(files||[]).filter(f=>f.type.startsWith('image/')).slice(0,6-st.imgs.length);
+  for(const f of fs){try{const c=await compImg(f);st.imgs.push({id:'i'+Date.now()+Math.random().toString(36).slice(2,6),...c});}catch(e){toast(e.message,'error');}}
+  if(prevLen===0&&st.imgs.length>0){st.slideImg=[0,Math.min(1,st.imgs.length-1),Math.min(2,st.imgs.length-1)];}
+  renderImgs();$('productImgInput').value='';
+}
+function renderPresenters(){$('presenterCardsContainer').innerHTML=PRESETS.map(p=>{const act=st.pid===p.id;return`<button type="button" data-pid="${p.id}" class="presenter-card text-left rounded-2xl border p-3 flex items-center gap-2.5 ${act?'active':'border-slate-200 bg-white'}"><svg viewBox="0 0 120 120" class="w-12 h-12 rounded-full border shrink-0 bg-pink-50"><circle cx="60" cy="60" r="58" fill="${p.tc}"/><path d="M30 118 C32 94,46 88,60 88 C74 88,88 94,90 118 Z" fill="${p.tc}"/><ellipse cx="60" cy="57" rx="23" ry="27" fill="${p.sc}"/><path d="M35 48 C38 26,82 26,85 48 Z" fill="${p.hc}"/><circle cx="49" cy="54" r="2.6" fill="#1e293b"/><circle cx="71" cy="54" r="2.6" fill="#1e293b"/><path d="M53 69 Q60 73 67 69" stroke="#e11d48" stroke-width="2" fill="none"/></svg><div class="min-w-0"><div class="text-[10px] font-bold text-pink-700">${p.g} • 20 ปี ${act?'✓':''}</div><div class="text-xs font-bold truncate">${p.n}</div><div class="text-[11px] text-slate-500 truncate">${p.s}</div></div></button>`;}).join('');}
+
+async function setPresenterImage(file){
+  if(!file)return;
+  try{
+    const c=await compImg(file,1080);st.pimg=c;
+    $('presenterImgPreview').src=c.dataUrl;$('presenterImgPreviewWrap').classList.remove('hidden');$('clearPresenterImgBtn').classList.remove('hidden');
+    if($('makerPresLayoutSelect').value==='none')$('makerPresLayoutSelect').value='left';
+    drawSlide(st.curSlide);toast('แนบรูปพรีเซนเตอร์ AI แล้ว!','success');
+  }catch{toast('โหลดรูปพรีเซนเตอร์ไม่ได้','error');}
+}
+
+async function analyzeProd(){
+  if(!st.imgs.length)return toast('กรุณาอัปโหลดรูปสินค้าอย่างน้อย 1 รูป','warning');
+  const info=$('storeInfoInput').value.trim(),name=$('productNameInput').value.trim();if(!info&&!name)return toast('กรุณากรอกชื่อหรือข้อมูลสินค้า','warning');
+  setLoad($('analyzeProductBtn'),true,'กำลังวิเคราะห์...');
+  try{
+    const parts=st.imgs.map(i=>({inlineData:{mimeType:i.mimeType,data:i.base64}}));
+    parts.push({text:`วิเคราะห์สินค้าจากรูปและข้อมูลร้านเท่านั้น (ห้ามแต่งเติมเกินจริง)\nชื่อ:${name}\nหมวด:${$('productCategorySelect').value}\nข้อมูล:${info}\nตอบ JSON: {"shape":"","color":"","size":"","labelLogo":"","visibleText":"","texture":"","factualSummary":""}`});
+    const{text,model}=await callGemini(parts,true);const d=parseJSON(text);
+    $('anaShape').value=d.shape||'';$('anaColor').value=d.color||'';$('anaSize').value=d.size||'';$('anaLabelLogo').value=d.labelLogo||'';$('anaText').value=d.visibleText||'';$('anaTexture').value=d.texture||'';$('anaFacts').value=d.factualSummary||'';
+    $('productAnalysisBox').classList.remove('hidden');$('analysisStatusText').textContent=`สำเร็จ (${model})`;toast('วิเคราะห์เรียบร้อย','success');
+  }catch(e){if(e.message!=='NO_KEY')toast(e.message,'error');}finally{setLoad($('analyzeProductBtn'),false);}
+}
+
+async function genAll(){
+  if(!st.imgs.length)return toast('กรุณาอัปโหลดรูปสินค้าในข้อ 1 ก่อน','warning');
+  const info=$('storeInfoInput').value.trim(),name=$('productNameInput').value.trim();if(!info)return toast('กรุณากรอกรายละเอียดสินค้าจากร้านในข้อ 1','warning');
+  setLoad($('generateAllBtn'),true,'กำลังสร้าง...');
+  try{
+    const sc=st.dur===20?2:1,parts=st.imgs.map(i=>({inlineData:{mimeType:i.mimeType,data:i.base64}}));
+    if(st.pimg)parts.push({inlineData:{mimeType:st.pimg.mimeType,data:st.pimg.base64}});
+    const ana=`รูปทรง:${$('anaShape').value}|สี:${$('anaColor').value}|ขนาด:${$('anaSize').value}|ฉลาก:${$('anaLabelLogo').value}|อักษร:${$('anaText').value}|เนื้อ:${$('anaTexture').value}|จริง:${$('anaFacts').value||info}`;
+    const plat=detPlat(),basketCTA=plat==='Shopee'?'กดตะกร้าส้มเลย':'กดตะกร้าซ้ายล่างเลย';
+    parts.push({text:`คุณคือนักเขียนสคริปต์โฆษณาสั้นมืออาชีพ ช่องทาง: ${plat}\nสินค้า: ${name||'ตามภาพ'} | หมวด: ${$('productCategorySelect').value}\nข้อมูลร้านจริงทั้งหมด: """${info}"""\nวิเคราะห์: ${ana}\nพรีเซนเตอร์: ${$('presenterPromptInput').value}\nวิดีโอ: ${st.ar}, ${st.res}, ${st.dur}วิ (${sc}ฉาก), สไตล์: ${st.style}, ASMR: ${st.asmr?'เปิด (No BGM, Foley ASMR พร้อมพากย์ไทย)':'ปกติ'}\nกติกา: 1) Hook 3 วิแรกสั้น 10-14 คำเปิดด้วยปัญหาจริงทันทีห้ามเกริ่นทักทาย 2) บทพูดฉากละไม่เกิน 10 วิ (20-28 คำ) เปิดลบ->ปิดบวก เก็บใจความสำคัญจากข้อมูลร้านจริงครบทุกประเด็น ปิดด้วย "${basketCTA}" ห้ามอวดอ้างและห้ามคำว่า "ตรงปก 100%" 3) highlights: สรุปจุดเด่นสินค้าจากข้อมูลร้านจริง 3 ข้อสั้นๆ ข้อละไม่เกิน 9 คำ 4) usageSteps: สรุปวิธีใช้จากข้อมูลร้านจริง 3 ขั้นตอนสั้นๆ ขั้นละไม่เกิน 9 คำ 5) Prompt อังกฤษคงรูปทรงฉลากโลโก้สีขนาดตัวอักษรตามจริง 6) แคปชั่นสรุปข้อมูลร้าน+แฮชแท็ก 4-6 คำ ไม่ตั้งราคาเอง\nตอบJSON:{"hook3s":"","scriptScene1":"","scriptScene2":"${sc===2?'บทพูดฉาก2':''}","highlights":["จุดเด่น 1","จุดเด่น 2","จุดเด่น 3"],"usageSteps":["ขั้นที่ 1","ขั้นที่ 2","ขั้นที่ 3"],"promptScene1":"","promptScene2":"${sc===2?'Promptฉาก2':''}","captionAndHashtags":""}`});
+    const{text,model}=await callGemini(parts,true);const r=parseJSON(text);
+    const clean=s=>(s||'').replace(/สินค้าตรงปก\s*100\s*%/gi,'ตามข้อมูลร้าน').replace(/ตรงปก\s*100\s*%/gi,'ตามข้อมูลจริง');
+    const enf=p=>p&&p.includes('STRICT PRODUCT FIDELITY')?p:`${p||''}\n\n${FIDELITY}`;
+    r.hook3s=clean(r.hook3s);r.scriptScene1=clean(r.scriptScene1);r.scriptScene2=clean(r.scriptScene2);r.captionAndHashtags=clean(r.captionAndHashtags);
+    r.promptScene1=enf(r.promptScene1);if(sc===2)r.promptScene2=enf(r.promptScene2);
+    st.resData=r;$('hookOutput').textContent=r.hook3s;$('captionOutput').textContent=r.captionAndHashtags;$('scriptScene1Output').textContent=r.scriptScene1;$('promptScene1Output').textContent=r.promptScene1;
+    if(sc===2){$('scriptScene2Card').classList.remove('hidden');$('promptScene2Card').classList.remove('hidden');$('scriptScene2Output').textContent=r.scriptScene2;$('promptScene2Output').textContent=r.promptScene2;}
+    else{$('scriptScene2Card').classList.add('hidden');$('promptScene2Card').classList.add('hidden');}
+    $('outputEmptyState').classList.add('hidden');$('outputContainer').classList.remove('hidden');
+    if(!$('makerOverlayInput').value.trim())$('makerOverlayInput').value=r.hook3s||name;
+    if(Array.isArray(r.highlights)){if(r.highlights[0])$('makerFeat1').value=clean(r.highlights[0]);if(r.highlights[1])$('makerFeat2').value=clean(r.highlights[1]);if(r.highlights[2])$('makerFeat3').value=clean(r.highlights[2]);}
+    if(Array.isArray(r.usageSteps)){if(r.usageSteps[0])$('makerStep1').value=clean(r.usageSteps[0]);if(r.usageSteps[1])$('makerStep2').value=clean(r.usageSteps[1]);if(r.usageSteps[2])$('makerStep3').value=clean(r.usageSteps[2]);}
+    drawSlide(st.curSlide);toast(`สร้างสำเร็จ (${model})`,'success');
+  }catch(e){if(e.message!=='NO_KEY')toast(e.message,'error');}finally{setLoad($('generateAllBtn'),false);}
+}
+
+function resetQc(){if($('qcVideoPlayer').src){URL.revokeObjectURL($('qcVideoPlayer').src);$('qcVideoPlayer').removeAttribute('src');}st.qcFile=null;st.qcMeta=null;$('videoFileInput').value='';$('videoPreviewWrap').classList.add('hidden');$('qcResultWrap').classList.add('hidden');$('qcEmptyState').classList.remove('hidden');}
+function loadVid(f){if(!f||!f.type.startsWith('video/'))return toast('เลือกไฟล์วิดีโอเท่านั้น','warning');resetQc();st.qcFile=f;$('qcVideoPlayer').src=URL.createObjectURL(f);$('videoPreviewWrap').classList.remove('hidden');$('qcVideoPlayer').onloadedmetadata=()=>{const v=$('qcVideoPlayer'),pass=Math.min(v.videoWidth,v.videoHeight)>=720;st.qcMeta={w:v.videoWidth,h:v.videoHeight,d:v.duration||0,pass};$('videoTechSpec').innerHTML=`${v.videoWidth}×${v.videoHeight}px • ${(v.duration||0).toFixed(1)}วิ <span class="px-1.5 rounded ${pass?'bg-emerald-100 text-emerald-800':'bg-rose-100 text-rose-700'}">${pass?'≥720p ผ่าน':'<720p'}</span>`;};}
+function getFrames(f){return new Promise((res,rej)=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';const u=URL.createObjectURL(f);v.src=u;v.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('อ่านคลิปไม่ได้'));};v.onloadedmetadata=async()=>{const d=v.duration||1,sc=Math.min(1,900/Math.max(v.videoWidth||720,v.videoHeight||1280));const c=document.createElement('canvas');c.width=Math.round((v.videoWidth||720)*sc);c.height=Math.round((v.videoHeight||1280)*sc);const ctx=c.getContext('2d'),out=[];for(const p of[.08,.25,.42,.58,.75,.92]){await new Promise(r=>{let ok=0;const tm=setTimeout(()=>{if(!ok){ok=1;r();}},1400);v.onseeked=()=>{if(!ok){ok=1;clearTimeout(tm);r();}};v.currentTime=Math.min(Math.max(.05,d*p),Math.max(.05,d-.05));});ctx.drawImage(v,0,0,c.width,c.height);const du=c.toDataURL('image/jpeg',.82);out.push({t:(d*p).toFixed(1),du,b64:du.split(',')[1]});}URL.revokeObjectURL(u);res(out);};});}
+async function inspectQc(){
+  if(!st.qcFile||!st.qcMeta)return toast('นำเข้าคลิปก่อน','warning');if(!st.imgs.length)return toast('อัปโหลดรูปสินค้าในข้อ 1 ก่อน','warning');setLoad($('inspectVideoBtn'),true,'กำลังตรวจ QC...');
+  try{
+    const fr=await getFrames(st.qcFile),parts=[];st.imgs.forEach(i=>parts.push({inlineData:{mimeType:i.mimeType,data:i.base64}}));fr.forEach(x=>parts.push({inlineData:{mimeType:'image/jpeg',data:x.b64}}));
+    parts.push({text:`QC ตรวจความตรงปก: รูป1-${st.imgs.length} สินค้าจริง, ถัดมาคือเฟรมวิดีโอ (${st.qcMeta.w}x${st.qcMeta.h}, ≥720p:${st.qcMeta.pass?'PASS':'FAIL'}). ตรวจ6มิติ ตอบJSON:{"overallVerdict":"PASSหรือFAIL","overallSummary":"","dimensions":{"shape":{"pass":true,"detail":""},"color":{"pass":true,"detail":""},"size":{"pass":true,"detail":""},"label":{"pass":true,"detail":""},"logo":{"pass":true,"detail":""},"typography":{"pass":true,"detail":""}},"issuesFound":[],"fixSuggestions":[]}`});
+    const{text,model}=await callGemini(parts,true);const q=parseJSON(text);const dm=q.dimensions||{},ok=Boolean(st.qcMeta.pass&&q.overallVerdict==='PASS'&&dm.shape?.pass&&dm.color?.pass&&dm.size?.pass&&dm.label?.pass&&dm.logo?.pass&&dm.typography?.pass);
+    $('qcEmptyState').classList.add('hidden');$('qcResultWrap').classList.remove('hidden');
+    $('qcVerdictBanner').className=`rounded-xl p-3 border text-xs ${ok?'bg-emerald-50 border-emerald-300 text-emerald-900':'bg-rose-50 border-rose-300 text-rose-900'}`;
+    $('qcVerdictBanner').innerHTML=`<div class="font-bold text-sm">${ok?'✅ ผ่านเกณฑ์ (PASS)':'❌ ไม่ผ่านเกณฑ์ (FAIL)'} (${esc(model)})</div><div>${esc(q.overallSummary)}</div>`;
+    $('qcFramesStrip').innerHTML=fr.map(x=>`<div class="relative rounded overflow-hidden bg-black aspect-[9/16]"><img src="${x.du}" class="w-full h-full object-cover"/><span class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] text-center">${x.t}s</span></div>`).join('');
+    const rows=[['ความละเอียด ≥720p',st.qcMeta.pass,`${st.qcMeta.w}×${st.qcMeta.h}`],['1. รูปทรง',dm.shape?.pass,dm.shape?.detail],['2. สี',dm.color?.pass,dm.color?.detail],['3. ขนาด',dm.size?.pass,dm.size?.detail],['4. ฉลาก',dm.label?.pass,dm.label?.detail],['5. โลโก้',dm.logo?.pass,dm.logo?.detail],['6. ตัวอักษร',dm.typography?.pass,dm.typography?.detail]];
+    $('qcDimensionsGrid').innerHTML=rows.map(r=>`<div class="rounded-lg p-2.5 border text-xs ${r[1]?'bg-emerald-50/50 border-emerald-200':'bg-rose-50 border-rose-200'}"><div class="flex justify-between font-bold"><span>${r[0]}</span><span>${r[1]?'ผ่าน':'ไม่ผ่าน'}</span></div><p class="text-slate-600 mt-0.5">${esc(r[2]||'-')}</p></div>`).join('');
+    $('qcAdviceBox').innerHTML=`<strong>คำแนะนำ:</strong> ${esc((q.fixSuggestions||[]).join(' • ')||'พร้อมใช้งาน')}`;
+  }catch(e){if(e.message!=='NO_KEY')toast(e.message,'error');}finally{setLoad($('inspectVideoBtn'),false);}
+}
+
+function trimCanvasToProduct(src){
+  const w=src.width,h=src.height,d=src.getContext('2d').getImageData(0,0,w,h).data;let minX=w,minY=h,maxX=0,maxY=0,f=0;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(d[(y*w+x)*4+3]>24){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;f=1;}}
+  if(!f)return src;minX=Math.max(0,minX-6);minY=Math.max(0,minY-6);maxX=Math.min(w-1,maxX+6);maxY=Math.min(h-1,maxY+6);
+  const cw=maxX-minX+1,ch=maxY-minY+1,o=document.createElement('canvas');o.width=cw;o.height=ch;o.getContext('2d').drawImage(src,minX,minY,cw,ch,0,0,cw,ch);return o;
+}
+function applyCutoutCanvas(item,cutCanvas,isPres=false){
+  const u=trimCanvasToProduct(cutCanvas).toDataURL('image/png'),im=new Image();
+  im.onload=()=>{item.dataUrl=u;item.imgEl=im;item.cutout=true;if(isPres){$('presenterImgPreview').src=u;drawSlide(st.curSlide);}else renderImgs();};im.src=u;
+}
+function fastCutout(){
+  if(!st.imgs.length)return toast('อัปโหลดรูปในข้อ 1 ก่อน','warning');
+  const item=st.imgs[activeImgIdx()],im=item.origEl||item.imgEl,c=document.createElement('canvas');c.width=im.width;c.height=im.height;const ctx=c.getContext('2d');ctx.drawImage(im,0,0);
+  const w=c.width,h=c.height,imgD=ctx.getImageData(0,0,w,h),d=imgD.data;let br=0,bg=0,bb=0;[0,(w-1)*4,(h-1)*w*4,((h-1)*w+w-1)*4].forEach(p=>{br+=d[p];bg+=d[p+1];bb+=d[p+2];});br/=4;bg/=4;bb/=4;
+  const tol=46*46*3,vis=new Uint8Array(w*h),q=new Int32Array(w*h);let hd=0,tl=0;
+  const push=i=>{const p=i*4;if(!vis[i]&&((d[p]-br)**2+(d[p+1]-bg)**2+(d[p+2]-bb)**2)<=tol){vis[i]=1;q[tl++]=i;}};
+  for(let x=0;x<w;x++){push(x);push((h-1)*w+x);}for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
+  while(hd<tl){const i=q[hd++],x=i%w,y=(i/w)|0;d[i*4+3]=0;if(x>0)push(i-1);if(x<w-1)push(i+1);if(y>0)push(i-w);if(y<h-1)push(i+w);}
+  ctx.putImageData(imgD,0,0);applyCutoutCanvas(item,c);$('makerStatusText').textContent='✅ ลบพื้นหลังสินค้าเรียบร้อย!';toast('ลบพื้นหลังเสร็จแล้ว','success');
+}
+async function runAiCutout(item,btn,isPres=false){
+  const im=item.origEl||item.imgEl;setLoad(btn,true,'โหลด AI...');$('makerStatusText').textContent='กำลังโหลดตัวไดคัท AI (ครั้งแรกอาจใช้ 15–30 วิ)...';
+  try{
+    if(!st.rmbgFn){const mod=await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');st.rmbgFn=mod.removeBackground;}
+    const sc=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const inB=await new Promise(r=>c.toBlob(r,'image/png'));$('makerStatusText').textContent=isPres?'กำลังแยกตัวพรีเซนเตอร์...':'กำลังแยกตัวสินค้า...';
+    const outB=await st.rmbgFn(inB,{model:'isnet_quint8'}),url=URL.createObjectURL(outB),ri=new Image();
+    ri.onload=()=>{const rc=document.createElement('canvas');rc.width=ri.width;rc.height=ri.height;rc.getContext('2d').drawImage(ri,0,0);URL.revokeObjectURL(url);applyCutoutCanvas(item,rc,isPres);$('makerStatusText').textContent='✅ ไดคัทเรียบร้อย!';toast('ไดคัท AI เสร็จแล้ว!','success');};ri.src=url;
+  }catch{$('makerStatusText').textContent='ไดคัท AI ไม่สำเร็จ';toast('ไดคัท AI ไม่สำเร็จ','error');}finally{setLoad(btn,false);}
+}
+function undoCutout(){if(!st.imgs.length)return;const item=st.imgs[activeImgIdx()];if(item.origUrl&&item.origEl){item.dataUrl=item.origUrl;item.imgEl=item.origEl;item.cutout=false;renderImgs();toast('คืนค่ารูปเดิมแล้ว');}}
+
+function genSwapPrompt(){
+  const name=$('productNameInput').value.trim()||'the skincare/beauty product';
+  const themeMap={marble:'luxury white marble studio table',sunlight:'warm sunlit minimalist Korean vanity room',beauty:'soft pastel pink-lavender glow beauty studio',shopee:'vibrant studio setting',tiktok:'sleek modern studio lighting',clean:'clean bright botanical vanity setting'};
+  const scene=themeMap[$('makerThemeSelect').value]||'bright luxury beauty studio';
+  const pres=$('presenterPromptInput').value.trim()||PRESETS[0].p;
+  const prodDesc=[$('anaShape').value,$('anaColor').value,$('anaLabelLogo').value,$('anaText').value].filter(Boolean).join(', ')||'exact appearance from reference image 1';
+  const txt=`Edit & Composite Prompt (ใช้ฟรีในแอป Gemini — แนบรูปสินค้า + รูปพรีเซนเตอร์ AI ของคุณ):
+
+1) PRODUCT EXTRACTION: From the 1st attached image, extract ONLY the product (${name}: ${prodDesc}). COMPLETELY REMOVE the original store model, hand, person, and original store background.
+2) NEW PRESENTER: Replace the person with the 20-year-old AI presenter ${st.pimg?'from the 2nd attached image':'described here'} (${pres}). Show a clear full face with bright fair glowing glass skin looking naturally at the camera.
+3) SCENE & POSE: The new presenter is naturally holding or posing closely beside the product in a ${scene}, photorealistic commercial beauty photography, ${$('makerRatioSelect').value} aspect ratio, sharp focus.
+4) STRICT PRODUCT LOCK: Keep 100% exact original shape, colors, size proportion, label layout, brand logo, and legible text of the product untouched and clearly visible. DO NOT alter or distort the product.`;
+  $('swapPromptOut').textContent=txt;$('swapPromptBox').classList.remove('hidden');toast('สร้าง Prompt เปลี่ยนนางแบบ/นายแบบแล้ว!','success');
+}
+
+function rrect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function wrapTh(ctx,txt,mw,maxLines=2){let tk=[];try{tk=Array.from(new Intl.Segmenter('th',{granularity:'word'}).segment(txt),s=>s.segment);}catch{tk=txt.split('');}const ls=[];let cur='';for(const t of tk){if(ctx.measureText(cur+t).width>mw&&cur){ls.push(cur.trim());cur=t;}else cur+=t;}if(cur.trim())ls.push(cur.trim());return ls.slice(0,maxLines);}
+function getAlbumSize(){const r=$('makerRatioSelect').value;if(r==='1:1')return{w:1080,h:1080,r};if(r==='9:16')return{w:1080,h:1920,r};return{w:1080,h:1350,r};}
+function drawBoxImg(ctx,im,cut,bx,by,bw,bh,z,sh){
+  if(!im||!im.complete)return;
+  if(cut){
+    const s=Math.min(bw/im.width,bh/im.height)*z,dw=im.width*s,dh=im.height*s;
+    ctx.save();if(sh){ctx.shadowColor='rgba(0,0,0,.32)';ctx.shadowBlur=34;ctx.shadowOffsetY=14;}
+    ctx.drawImage(im,bx+(bw-dw)/2,by+bh-dh,dw,dh);ctx.restore();
+  }else{
+    ctx.save();if(sh){ctx.shadowColor='rgba(0,0,0,.22)';ctx.shadowBlur=30;ctx.shadowOffsetY=12;}ctx.fillStyle='#fff';rrect(ctx,bx,by,bw,bh,32);ctx.fill();ctx.restore();
+    ctx.save();rrect(ctx,bx,by,bw,bh,32);ctx.clip();const s=Math.max(bw/im.width,bh/im.height)*z;
+    ctx.drawImage(im,bx+(bw-im.width*s)/2,by+(bh-im.height*s)/2,im.width*s,im.height*s);ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=5;rrect(ctx,bx,by,bw,bh,32);ctx.stroke();
+  }
+}
+
+function drawSlide(slideIdx){
+  const cv=$('makerCanvas'),d=getAlbumSize();
+  if(cv.width!==d.w||cv.height!==d.h){cv.width=d.w;cv.height=d.h;}
+  $('makerRatioTag').textContent=`${d.r} (${d.w}×${d.h})`;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,tm=$('makerThemeSelect').value;
+  const TH={
+    beauty:{a:'#fdf2f8',b:'#f5d0fe',glow:'rgba(255,255,255,.92)',ped:'#fff5f9',tag:'#db2777',tagT:'#fff',hd:'#831843',cta:'#9333ea',ctaT:'#fff',card:'rgba(255,255,255,.92)',cardT:'#1e293b',acc:'#db2777'},
+    marble:{a:'#f8f6f4',b:'#e2dcd6',glow:'rgba(255,255,255,.94)',ped:'#ffffff',tag:'#1e293b',tagT:'#fff',hd:'#1e293b',cta:'#db2777',ctaT:'#fff',card:'rgba(255,255,255,.94)',cardT:'#1e293b',acc:'#1e293b',vein:1},
+    sunlight:{a:'#fff4e6',b:'#f3d8b6',glow:'rgba(255,248,220,.88)',ped:'#fffaf0',tag:'#9a3412',tagT:'#fff',hd:'#431407',cta:'#ea580c',ctaT:'#fff',card:'rgba(255,252,245,.94)',cardT:'#431407',acc:'#ea580c',sun:1},
+    shopee:{a:'#7c2d12',b:'#ee4d2d',glow:'rgba(255,220,160,.45)',ped:'#ffedd5',tag:'#ffdf00',tagT:'#111',hd:'#fff',cta:'#fff',ctaT:'#ee4d2d',card:'rgba(255,255,255,.95)',cardT:'#1e293b',acc:'#ee4d2d'},
+    tiktok:{a:'#09090d',b:'#1f1235',glow:'rgba(37,244,238,.26)',ped:'#1e293b',tag:'#fe2c55',tagT:'#fff',hd:'#fff',cta:'#25f4ee',ctaT:'#000',card:'rgba(30,41,59,.9)',cardT:'#f8fafc',acc:'#25f4ee'},
+    clean:{a:'#f0fdf4',b:'#dcfce7',glow:'rgba(255,255,255,.92)',ped:'#ffffff',tag:'#15803d',tagT:'#fff',hd:'#14532d',cta:'#16a34a',ctaT:'#fff',card:'rgba(255,255,255,.94)',cardT:'#14532d',acc:'#16a34a'}
+  }[tm];
+
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,TH.a);g.addColorStop(1,TH.b);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const rg=ctx.createRadialGradient(W/2,H*.45,W*.05,W/2,H*.45,W*.65);rg.addColorStop(0,TH.glow);rg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  if(TH.vein){ctx.save();ctx.strokeStyle='rgba(160,150,145,.16)';ctx.lineWidth=5;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(0,H*(.18+.22*i));ctx.bezierCurveTo(W*.35,H*(.12+.2*i),W*.65,H*(.3+.18*i),W,H*(.2+.21*i));ctx.stroke();}ctx.restore();}
+  if(TH.sun){ctx.save();ctx.fillStyle='rgba(255,250,235,.32)';ctx.beginPath();ctx.moveTo(W*.15,0);ctx.lineTo(W*.55,0);ctx.lineTo(W*.95,H*.8);ctx.lineTo(W*.35,H*.8);ctx.closePath();ctx.fill();ctx.restore();}
+
+  const imgIdx=st.imgs.length?(st.slideImg[slideIdx]%st.imgs.length):0,item=st.imgs[imgIdx],im=item?.imgEl;
+  const userZ=parseInt($('makerZoomRange').value,10)/100,pLay=$('makerPresLayoutSelect').value,hasPres=Boolean(st.pimg&&pLay!=='none');
+  const padX=Math.round(W*.08),iw=W-padX*2;
+
+  if(slideIdx===0){
+    // SLIDE 1: เปิดตัวด้วย Hook
+    const tag=$('makerTagInput').value.trim();
+    const iy=Math.round(H*(tag?.24:.21)),ih=Math.round(H*.53);
+    if(hasPres&&pLay==='back')drawBoxImg(ctx,st.pimg.imgEl,st.pimg.cutout,Math.round(W*.14),iy,Math.round(W*.72),ih,1,false);
+    const prodX=hasPres&&pLay==='left'?Math.round(W*.44):hasPres&&pLay==='right'?padX:Math.round(W*.14);
+    const prodW=hasPres&&(pLay==='left'||pLay==='right')?Math.round(W*.48):W-Math.round(W*.28);
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(prodX+prodW/2,iy+ih+12,prodW*.42,20,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=TH.ped;ctx.beginPath();ctx.ellipse(prodX+prodW/2,iy+ih,prodW*.4,15,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(hasPres&&(pLay==='left'||pLay==='right'))drawBoxImg(ctx,st.pimg.imgEl,st.pimg.cutout,pLay==='left'?padX:Math.round(W*.46),iy+Math.round(ih*.04),Math.round(W*.48),Math.round(ih*.94),1,true);
+    if(im&&im.complete)drawBoxImg(ctx,im,item.cutout,prodX,hasPres&&pLay==='back'?iy+Math.round(ih*.2):iy,prodW,hasPres&&pLay==='back'?Math.round(ih*.8):ih,userZ,true);
+    else{ctx.fillStyle='rgba(0,0,0,.08)';rrect(ctx,prodX,iy,prodW,ih,32);ctx.fill();ctx.fillStyle='#94a3b8';ctx.font='bold 38px sans-serif';ctx.textAlign='center';ctx.fillText('อัปโหลดรูปในข้อ 1',W/2,iy+ih/2);}
+
+    if(tag){ctx.font='bold 34px sans-serif';const tw=Math.min(iw,ctx.measureText(tag).width+56);ctx.fillStyle=TH.tag;rrect(ctx,(W-tw)/2,Math.round(H*.038),tw,52,26);ctx.fill();ctx.fillStyle=TH.tagT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tag,W/2,Math.round(H*.038)+26);}
+    const hk=$('makerOverlayInput').value.trim()||st.resData?.hook3s||$('productNameInput').value.trim()||'ไอเท็มดูแลผิวที่ต้องมีติดบ้าน';
+    ctx.font='bold 54px sans-serif';const ls=wrapTh(ctx,hk,W-100,2),lh=70,hkY=tag?Math.round(H*.13):Math.round(H*.095);
+    ctx.fillStyle=TH.hd;ctx.textAlign='center';ctx.textBaseline='middle';ls.forEach((l,i)=>ctx.fillText(l,W/2,hkY+i*lh));
+    const pr=$('makerPriceInput').value.trim();
+    if(pr){ctx.font='bold 40px sans-serif';const cw=Math.min(W-100,Math.max(W*.55,ctx.measureText(pr).width+80)),cy=Math.round(H*.85);ctx.fillStyle=TH.cta;rrect(ctx,(W-cw)/2,cy,cw,82,41);ctx.fill();ctx.fillStyle=TH.ctaT;ctx.fillText(pr,W/2,cy+41);}
+  } else if(slideIdx===1){
+    // SLIDE 2: ไม่มีตัวหนังสือด้านบน มีแค่ภาพสินค้า + การ์ดจุดเด่น 3 ข้อ
+    const iy=Math.round(H*.06),ih=Math.round(H*.38),pw=Math.round(W*.62),px=(W-pw)/2;
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.ellipse(W/2,iy+ih+8,pw*.38,15,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(im&&im.complete)drawBoxImg(ctx,im,item.cutout,px,iy,pw,ih,userZ,true);
+    else{ctx.fillStyle='rgba(0,0,0,.08)';rrect(ctx,px,iy,pw,ih,28);ctx.fill();}
+
+    const items=[$('makerFeat1').value.trim()||'จุดเด่น 1',$('makerFeat2').value.trim()||'จุดเด่น 2',$('makerFeat3').value.trim()||'จุดเด่น 3'];
+    const startY=Math.round(H*.50),gap=Math.round(H*.02),cardH=Math.round(H*.13),cardW=W-100;
+    const cFs=Math.round(Math.min(36,Math.max(26,cardH*.22))),cLh=Math.round(cFs*1.28);
+    items.forEach((txt,idx)=>{
+      const cy=startY+idx*(cardH+gap);
+      ctx.save();ctx.shadowColor='rgba(0,0,0,.1)';ctx.shadowBlur=16;ctx.shadowOffsetY=6;ctx.fillStyle=TH.card;rrect(ctx,50,cy,cardW,cardH,26);ctx.fill();ctx.restore();
+      const bR=Math.round(Math.min(30,cardH*.22)),bX=104,bY=cy+cardH/2;
+      ctx.fillStyle='#16a34a';ctx.beginPath();ctx.arc(bX,bY,bR,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font=`bold ${bR}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✓',bX,bY);
+      ctx.fillStyle=TH.cardT;ctx.font=`bold ${cFs}px sans-serif`;ctx.textAlign='left';
+      const lines=wrapTh(ctx,txt,cardW-130,2),ty=lines.length>1?bY-cLh/2:bY;lines.forEach((l,li)=>ctx.fillText(l,154,ty+li*cLh));
+    });
+  } else {
+    // SLIDE 3: ไม่มีตัวหนังสือด้านบน มีแค่ภาพสินค้า + วิธีใช้ 3 ขั้น + เหลือป้ายพิกัดตะกร้าส้มไว้ด้านล่าง
+    const iy=Math.round(H*.055),ih=Math.round(H*.34),pw=Math.round(W*.58),px=(W-pw)/2;
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.ellipse(W/2,iy+ih+8,pw*.38,14,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(im&&im.complete)drawBoxImg(ctx,im,item.cutout,px,iy,pw,ih,userZ,true);
+    else{ctx.fillStyle='rgba(0,0,0,.08)';rrect(ctx,px,iy,pw,ih,28);ctx.fill();}
+
+    const items=[$('makerStep1').value.trim()||'ขั้นที่ 1',$('makerStep2').value.trim()||'ขั้นที่ 2',$('makerStep3').value.trim()||'ขั้นที่ 3'];
+    const startY=Math.round(H*.445),gap=Math.round(H*.016),cardH=Math.round(H*.115),cardW=W-100;
+    const cFs=Math.round(Math.min(35,Math.max(25,cardH*.23))),cLh=Math.round(cFs*1.28);
+    items.forEach((txt,idx)=>{
+      const cy=startY+idx*(cardH+gap);
+      ctx.save();ctx.shadowColor='rgba(0,0,0,.1)';ctx.shadowBlur=16;ctx.shadowOffsetY=6;ctx.fillStyle=TH.card;rrect(ctx,50,cy,cardW,cardH,26);ctx.fill();ctx.restore();
+      const bR=Math.round(Math.min(28,cardH*.23)),bX=104,bY=cy+cardH/2;
+      ctx.fillStyle=TH.acc;ctx.beginPath();ctx.arc(bX,bY,bR,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=(tm==='tiktok'?'#000':'#fff');ctx.font=`bold ${bR}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(idx+1),bX,bY);
+      ctx.fillStyle=TH.cardT;ctx.font=`bold ${cFs}px sans-serif`;ctx.textAlign='left';
+      const lines=wrapTh(ctx,txt,cardW-130,2),ty=lines.length>1?bY-cLh/2:bY;lines.forEach((l,li)=>ctx.fillText(l,154,ty+li*cLh));
+    });
+    const foot=$('makerBasketInput').value.trim()||'พิกัดตะกร้าส้ม 👇';
+    const fH=Math.round(Math.min(72,H*.062));
+    ctx.font=`bold ${Math.round(fH*.48)}px sans-serif`;const fw=Math.min(W-120,Math.max(440,ctx.measureText(foot).width+76)),fy=Math.round(H*.90);
+    ctx.fillStyle=TH.cta;rrect(ctx,(W-fw)/2,fy,fw,fH,fH/2);ctx.fill();ctx.fillStyle=TH.ctaT;ctx.textAlign='center';ctx.fillText(foot,W/2,fy+fH/2);
+  }
+  if($('makerSparkleChk').checked){[[.1,.22],[.9,.24],[.12,.72],[.88,.7]].forEach((pt,k)=>{ctx.save();ctx.globalAlpha=.8;ctx.fillStyle='#fff8dc';const x=W*pt[0],y=H*pt[1],sz=12+5*(k%2);ctx.beginPath();ctx.moveTo(x,y-sz);ctx.lineTo(x+sz*.28,y-sz*.28);ctx.lineTo(x+sz,y);ctx.lineTo(x+sz*.28,y+sz*.28);ctx.lineTo(x,y+sz);ctx.lineTo(x-sz*.28,y+sz*.28);ctx.lineTo(x-sz,y);ctx.lineTo(x-sz*.28,y-sz*.28);ctx.closePath();ctx.fill();ctx.restore();});}
+}
+
+function saveOneSlide(){drawSlide(st.curSlide);$('makerCanvas').toBlob(b=>{if(!b)return;const a=document.createElement('a');a.download=`post-slide-${st.curSlide+1}-${Date.now()}.png`;a.href=URL.createObjectURL(b);document.body.appendChild(a);a.click();a.remove();toast(`บันทึกรูปที่ ${st.curSlide+1} แล้ว!`,'success');},'image/png');}
+function buildAll3Slides(){
+  if(!st.imgs.length)toast('แนะนำอัปโหลดรูปสินค้าในข้อ 1 ด้วยนะครับ','warning');
+  const gal=$('makerSetGallery');gal.innerHTML='';const names=['1-เปิดตัว','2-จุดเด่น','3-วิธีใช้'];
+  [0,1,2].forEach(idx=>{drawSlide(idx);const u=$('makerCanvas').toDataURL('image/png'),card=document.createElement('div');card.className='bg-white border border-pink-200 rounded-xl p-1.5 space-y-1 text-center';card.innerHTML=`<img src="${u}" class="w-full rounded-lg border object-contain bg-slate-100" /><a href="${u}" download="${names[idx]}.png" class="block text-[11px] py-1.5 rounded-lg bg-emerald-600 text-white font-bold">⬇️ รูป ${idx+1}</a>`;gal.appendChild(card);});
+  drawSlide(st.curSlide);$('makerStatusText').textContent='✅ สร้างครบ 3 รูปแล้ว! กดปุ่มสีเขียว "⬇️ รูป 1 / 2 / 3" เพื่อเซฟลงมือถือได้เลย';toast('สร้างชุดภาพโพสต์ขายครบ 3 รูปแล้ว!','success');
+}
+
+const getQ=()=>{try{return JSON.parse(localStorage.getItem(Q_KEY)||'[]');}catch{return[];}};
+const setQ=l=>{try{localStorage.setItem(Q_KEY,JSON.stringify(l));}catch{}};
+function renderQ(){const l=getQ();$('queueListContainer').innerHTML=l.length?l.map(x=>`<div class="rounded-xl border p-3 ${x.done?'bg-slate-50 opacity-60':'bg-white border-pink-100'}"><div class="flex justify-between items-start gap-2 mb-1.5"><div class="text-sm font-bold">${x.done?'✅ ':''}${esc(x.name)}</div><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100">${esc(x.platform)}</span></div><div class="flex flex-wrap gap-1.5"><button type="button" data-qa="n" data-qi="${x.id}" class="text-[11px] px-2 py-1 rounded bg-slate-100 font-semibold">📋 ชื่อสินค้า</button>${x.caption?`<button type="button" data-qa="c" data-qi="${x.id}" class="text-[11px] px-2 py-1 rounded bg-purple-50 text-purple-700 font-semibold">📝 แคปชัน</button>`:''}${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener" class="text-[11px] px-2 py-1 rounded bg-blue-50 text-blue-700 font-semibold">🔗 ลิงก์</a>`:''}<button type="button" data-qa="d" data-qi="${x.id}" class="text-[11px] px-2 py-1 rounded ${x.done?'bg-slate-200':'bg-emerald-600 text-white'} font-semibold">${x.done?'ย้อน':'โพสต์แล้ว'}</button><button type="button" data-qa="x" data-qi="${x.id}" class="text-[11px] px-2 py-1 text-rose-600">🗑️</button></div></div>`).join(''):'<div class="text-center py-8 border-2 border-dashed rounded-xl text-xs text-slate-400">ยังไม่มีรายการในคิว</div>';}
+function addQ(){const n=$('productNameInput').value.trim();if(!n)return toast('กรอกชื่อสินค้าในข้อ 1 ก่อน','warning');const q=getQ();q.unshift({id:Date.now(),name:n,platform:detPlat(),url:$('productUrlInput').value.trim(),caption:$('captionOutput').textContent.trim()||$('storeInfoInput').value.trim(),done:false});setQ(q);renderQ();toast('เพิ่มเข้าคิวปักตะกร้าแล้ว!','success');}
+function bindGrp(id,fn){$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-value]');if(!b)return;$(id).querySelectorAll('button[data-value]').forEach(x=>x.classList.remove('active'));b.classList.add('active');fn(b.dataset.value);});}
+
+$('apiKeyInput').value=localStorage.getItem(API_KEY)||'';if(localStorage.getItem(MOD_KEY))$('modelSelect').value=localStorage.getItem(MOD_KEY);updBadge($('apiKeyInput').value);
+$('saveApiBtn').onclick=()=>saveKey(true);$('apiKeyInput').onchange=()=>saveKey(false);$('modelSelect').onchange=()=>saveKey(false);
+$('toggleApiVisBtn').onclick=()=>{$('apiKeyInput').type=$('apiKeyInput').type==='password'?'text':'password';};
+$('clearApiBtn').onclick=()=>{$('apiKeyInput').value='';saveKey(false);toast('ลบ API Key แล้ว');};
+$('testApiBtn').onclick=async()=>{setLoad($('testApiBtn'),true,'เช็ค...');try{const{model}=await callGemini([{text:'Reply JSON {"status":"OK"}'}],true);toast(`เชื่อมต่อสำเร็จ (${model})`,'success');}catch(e){if(e.message!=='NO_KEY')toast(e.message,'error');}finally{setLoad($('testApiBtn'),false);}};
+document.querySelectorAll('.step-nav-btn').forEach(b=>b.onclick=()=>{const t=$(b.dataset.target);if(t)t.scrollIntoView({behavior:'smooth'});});
+const rst=()=>{st.imgs=[];st.slideImg=[0,0,0];st.resData=null;st.pimg=null;renderImgs();$('productUrlInput').value='';detPlat();$('productNameInput').value='';$('storeInfoInput').value='';$('makerOverlayInput').value='';$('makerSetGallery').innerHTML='';$('productAnalysisBox').classList.add('hidden');$('outputContainer').classList.add('hidden');$('outputEmptyState').classList.remove('hidden');$('presenterImgInput').value='';$('makerPresInput').value='';$('presenterImgPreviewWrap').classList.add('hidden');$('clearPresenterImgBtn').classList.add('hidden');$('makerPresLayoutSelect').value='none';resetQc();drawSlide(st.curSlide);toast('รีเซ็ตงานแล้ว');};
+$('resetProjectBtn').onclick=rst;$('resetProjectBtnDesktop').onclick=rst;
+$('productUrlInput').oninput=()=>{const p=detPlat();if(p==='TikTok'&&$('makerBasketInput').value==='พิกัดตะกร้าส้ม 👇')$('makerBasketInput').value='พิกัดตะกร้าซ้ายล่าง 👇';else if(p==='Shopee'&&$('makerBasketInput').value==='พิกัดตะกร้าซ้ายล่าง 👇')$('makerBasketInput').value='พิกัดตะกร้าส้ม 👇';drawSlide(st.curSlide);};
+$('smartParseBtn').onclick=()=>{const r=$('storeInfoInput').value.trim();if(!r)return toast('วางข้อความก่อน','warning');const u=r.match(/https?:\/\/[^\s]+/);if(u&&!$('productUrlInput').value){$('productUrlInput').value=u[0];detPlat();}const l=r.split(/\n+/).map(s=>s.trim()).find(s=>s&&!s.startsWith('http')&&s.length>5);if(l&&!$('productNameInput').value)$('productNameInput').value=l.slice(0,90);toast('ดึงข้อมูลแล้ว','success');};
+$('fillSampleDataBtn').onclick=()=>{$('productUrlInput').value='https://shopee.co.th/sample';detPlat();$('productNameInput').value='Lumina Vitamin C Serum';$('storeInfoInput').value='ปริมาณ 30 ml ขวดแก้วใสฝาดรอปเปอร์สีขาว ซึมไวไม่เหนอะหนะ เติมความชุ่มชื้นให้ผิวดูอิ่มน้ำ วิธีใช้: หยด 2-3 หยดทาทั่วใบหน้า เช้า-เย็น';drawSlide(st.curSlide);};
+$('productImgDropzone').onclick=()=>$('productImgInput').click();$('productImgInput').onchange=e=>addImgs(e.target.files);
+$('productImgGrid').onclick=e=>{const b=e.target.closest('.rm-img');if(b){st.imgs=st.imgs.filter(x=>x.id!==b.dataset.del);renderImgs();}};
+$('clearAllImgsBtn').onclick=()=>{st.imgs=[];renderImgs();};$('analyzeProductBtn').onclick=analyzeProd;
+$('presenterCardsContainer').onclick=e=>{const b=e.target.closest('button[data-pid]');if(!b)return;st.pid=b.dataset.pid;$('presenterPromptInput').value=PRESETS.find(x=>x.id===st.pid).p;renderPresenters();};
+$('presenterImgInput').onchange=e=>setPresenterImage(e.target.files?.[0]);
+$('makerPresInput').onchange=e=>setPresenterImage(e.target.files?.[0]);
+$('clearPresenterImgBtn').onclick=()=>{st.pimg=null;$('presenterImgInput').value='';$('makerPresInput').value='';$('presenterImgPreviewWrap').classList.add('hidden');$('clearPresenterImgBtn').classList.add('hidden');$('makerPresLayoutSelect').value='none';drawSlide(st.curSlide);};
+bindGrp('aspectRatioGroup',v=>{st.ar=v;if(['9:16','1:1'].includes(v)){$('makerRatioSelect').value=v;drawSlide(st.curSlide);}});bindGrp('resolutionGroup',v=>st.res=v);bindGrp('durationGroup',v=>st.dur=parseInt(v,10));bindGrp('demoStyleGroup',v=>st.style=v);
+$('asmrToggle').onchange=e=>st.asmr=e.target.checked;
+$('generateAllBtn').onclick=genAll;$('saveToQueueFromStep4Btn').onclick=()=>{addQ();$('step5').scrollIntoView({behavior:'smooth'});};
+$('speakAllScriptsBtn').onclick=()=>{const t=[$('scriptScene1Output').textContent,st.dur===20?$('scriptScene2Output').textContent:''].filter(Boolean).join(' ');if(!t)return toast('ไม่มีบทพูด','warning');if(!('speechSynthesis' in window))return toast('ไม่รองรับเสียง','warning');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';u.rate=1.05;speechSynthesis.speak(u);};
+$('stopSpeakBtn').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.cancel();};
+$('copyHookBtn').onclick=()=>copyTxt($('hookOutput').textContent,$('copyHookBtn'));$('copyCaptionBtn').onclick=()=>copyTxt($('captionOutput').textContent,$('copyCaptionBtn'));
+$('copyScriptScene1Btn').onclick=()=>copyTxt($('scriptScene1Output').textContent,$('copyScriptScene1Btn'));$('copyScriptScene2Btn').onclick=()=>copyTxt($('scriptScene2Output').textContent,$('copyScriptScene2Btn'));
+$('copyAllScriptsBtn').onclick=()=>copyTxt([$('scriptScene1Output').textContent,st.dur===20?$('scriptScene2Output').textContent:''].filter(Boolean).join('\n'),$('copyAllScriptsBtn'));
+$('copyPromptScene1Btn').onclick=()=>copyTxt($('promptScene1Output').textContent,$('copyPromptScene1Btn'));$('copyPromptScene2Btn').onclick=()=>copyTxt($('promptScene2Output').textContent,$('copyPromptScene2Btn'));
+$('copyAllOutputsBtn').onclick=()=>copyTxt([$('hookOutput').textContent,$('scriptScene1Output').textContent,st.dur===20?$('scriptScene2Output').textContent:'',$('promptScene1Output').textContent,st.dur===20?$('promptScene2Output').textContent:'',$('captionOutput').textContent].filter(Boolean).join('\n\n'),$('copyAllOutputsBtn'));
+$('videoDropzone').onclick=()=>$('videoFileInput').click();$('videoFileInput').onchange=e=>{if(e.target.files?.[0])loadVid(e.target.files[0]);};
+$('clearVideoBtn').onclick=resetQc;$('inspectVideoBtn').onclick=inspectQc;
+
+$('slideTabGrp').onclick=e=>{
+  const b=e.target.closest('button[data-slide]');if(!b)return;
+  st.curSlide=Number(b.dataset.slide);$('slideTabGrp').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  [0,1,2].forEach(k=>$('slidePanel'+k).classList.toggle('hidden',k!==st.curSlide));renderImgs();
+};
+$('makerImgPick').onclick=e=>{const b=e.target.closest('button[data-pick]');if(!b)return;st.slideImg[st.curSlide]=Number(b.dataset.pick);renderImgs();};
+$('cutoutAiBtn').onclick=()=>{if(!st.imgs.length)return toast('อัปโหลดรูปสินค้าในข้อ 1 ก่อน','warning');runAiCutout(st.imgs[activeImgIdx()],$('cutoutAiBtn'),false);};
+$('cutoutPresAiBtn').onclick=()=>{if(!st.pimg)return toast('กรุณากด "+ รูปคน AI" เลือกรูปพรีเซนเตอร์ก่อนครับ','warning');runAiCutout(st.pimg,$('cutoutPresAiBtn'),true);};
+$('cutoutFastBtn').onclick=fastCutout;$('cutoutUndoBtn').onclick=undoCutout;
+['makerThemeSelect','makerRatioSelect','makerPresLayoutSelect','makerSparkleChk'].forEach(id=>$(id).onchange=()=>drawSlide(st.curSlide));
+['makerTagInput','makerPriceInput','makerOverlayInput','makerFeat1','makerFeat2','makerFeat3','makerStep1','makerStep2','makerStep3','makerBasketInput','makerZoomRange'].forEach(id=>$(id).oninput=()=>drawSlide(st.curSlide));
+$('makerSaveOneBtn').onclick=saveOneSlide;$('makerSaveSetBtn').onclick=buildAll3Slides;
+$('genSwapPromptBtn').onclick=genSwapPrompt;$('copySwapPromptBtn').onclick=()=>copyTxt($('swapPromptOut').textContent,$('copySwapPromptBtn'));
+$('addCurrentToQueueBtn').onclick=addQ;$('clearDoneQueueBtn').onclick=()=>{setQ(getQ().filter(x=>!x.done));renderQ();};
+$('queueListContainer').onclick=e=>{const b=e.target.closest('button[data-qa]');if(!b)return;const id=Number(b.dataset.qi),a=b.dataset.qa;let q=getQ(),x=q.find(i=>i.id===id);if(!x)return;if(a==='n')copyTxt(x.name,b);else if(a==='c')copyTxt(x.caption,b);else if(a==='d'){setQ(q.map(i=>i.id===id?{...i,done:!i.done}:i));renderQ();}else if(a==='x'){setQ(q.filter(i=>i.id!==id));renderQ();}};
+renderPresenters();$('presenterPromptInput').value=PRESETS[0].p;renderImgs();renderQ();
+})();
+</script>
+</body>
+</html>
